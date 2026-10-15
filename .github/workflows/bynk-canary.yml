@@ -45,4 +45,7 @@ jobs:
       upstream-result: ${{ needs.e2e.result }}
       kind: example
       source: .
+      # Also run `bynk-deploy` as an offline dry run. Needs no credentials. Turn
+      # it off only for a known limit, and say which (the shop does, for
+      # accuser/bynk#1961).
       deploy-dry-run: true

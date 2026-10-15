@@ -14,7 +14,8 @@ bynk.toml                       project manifest (rename the project)
 src/example/count.bynk          commons: a pure function, unit-tested
 src/example/app.bynk            context: an agent (a Durable Object) behind an HTTP service
 tests/example/count.bynk        the unit test
-e2e/scenarios.sh                end-to-end scenarios, run against the served app
+e2e/scenarios.sh                end-to-end scenarios, run against the served app (and recipes for tokens, events, cron, several contexts)
+scripts/bump-bynk.sh            move the pinned Bynk version in every workflow at once
 .github/workflows/
   ci.yml                        format check, type check, tests (bynk-ci)
   e2e.yml                       serves the app with `bynk dev`, runs e2e/scenarios.sh (bynk-dev)
@@ -77,9 +78,41 @@ gh workflow run dispatch-canary.yml -R bynk-lang/.github -f repos=bynk-lang/your
 
 `ci.yml`, `e2e.yml` and `deploy.yml` pin a Bynk version (`0.330.4`), so a red
 build on a push or pull request means your change broke something, not that a
-new compiler came out. The canary passes the newer release in. When the canary
-shows the app works with a newer version, bump the pins together, in one pull
-request.
+new compiler came out. The canary passes the newer release in. When it shows
+the app works with a newer version, move all three pins in one pull request:
+
+```sh
+./scripts/bump-bynk.sh 0.331.0
+```
+
+## Beyond one context
+
+The counter is one context. For an app with several, [`bynk-lang/shop`](https://github.com/bynk-lang/shop)
+is the worked example: four contexts over Service Bindings and events, with
+authentication and end-to-end scenarios. The recipes at the foot of
+[`e2e/scenarios.sh`](e2e/scenarios.sh) are what it needed beyond this template:
+per-worker URLs, a warm-up for the first call across a Service Binding, signing
+bearer tokens, polling for events, and firing cron.
+
+## Limits to know about
+
+Things Bynk can't do yet that an example will run into, with where they are
+tracked:
+
+- **An agent can't call another context.** It faults at runtime
+  ([accuser/bynk#1960](https://github.com/accuser/bynk/issues/1960)), so do the
+  cross-context calls in a service and keep the agent to its own state.
+- **Events and `bynk deploy` don't compose.** A subscriber must consume the
+  emitter, so the Service Bindings form a cycle and the deploy is refused
+  ([accuser/bynk#1961](https://github.com/accuser/bynk/issues/1961)). If your app
+  subscribes across contexts, set `deploy-dry-run: false` in `bynk-canary.yml`
+  and make `deploy.yml` manual, with a comment naming the issue.
+- **The `system` test tier wires no event fan-out**
+  ([accuser/bynk#1959](https://github.com/accuser/bynk/issues/1959)), so test
+  event-driven flows in the end-to-end scenarios.
+- **A local named like a service collides in tests.** A `let level` beside a
+  `service level` makes the generated test file redeclare it (`TS2451`). Pick
+  another name in the test.
 
 ## Deploy
 
