@@ -21,7 +21,9 @@ agent Counter {
 		value
 	}
 
-	on call read() -> Effect[Int] { value }
+	on call read() -> Effect[Int] {
+		value
+	}
 }
 
 service api from http {
