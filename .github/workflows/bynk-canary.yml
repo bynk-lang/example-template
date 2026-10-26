@@ -49,3 +49,5 @@ jobs:
       # it off only for a known limit, and say which (the shop does, for
       # accuser/bynk#1961).
       deploy-dry-run: true
+      bump: true            # propose moving BYNK_VERSION to a newer release that passes
+    secrets: inherit        # the bump App's BUMP_APP_ID and BUMP_APP_KEY
