@@ -1,0 +1,10 @@
+version = 1
+
+[environments.default.kv]
+
+[environments.default.workers.example-app]
+deployed = true
+
+[environments.default.workers.example-app.contracts]
+
+[environments.default.workers.example-app.expects]
