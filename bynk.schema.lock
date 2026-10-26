@@ -1,3 +1,17 @@
-version = 1
+version = 2
 
 [events]
+
+[agents."example.app.Counter"]
+version = 1
+floor = 1
+
+[[agents."example.app.Counter".shapes]]
+version = 1
+additive = false
+
+[[agents."example.app.Counter".shapes.fields]]
+name = "value"
+kind = "Cell"
+type = "Int"
+refinement = "Int"
