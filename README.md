@@ -15,11 +15,11 @@ src/example/count.bynk          commons: a pure function, unit-tested
 src/example/app.bynk            context: an agent (a Durable Object) behind an HTTP service
 tests/example/count.bynk        the unit test
 e2e/scenarios.sh                end-to-end scenarios, run against the served app (and recipes for tokens, events, cron, several contexts)
-scripts/bump-bynk.sh            move the pinned Bynk version in every workflow at once
+BYNK_VERSION                    the Bynk version every workflow uses; the canary proposes moving it
 .github/workflows/
   ci.yml                        format check, type check, tests (bynk-ci)
   e2e.yml                       serves the app with `bynk dev`, runs e2e/scenarios.sh (bynk-dev)
-  bynk-canary.yml               re-runs all of it against each new Bynk release
+  bynk-canary.yml               re-runs all of it against each new Bynk release, and proposes the move
   deploy.yml                    dry run on pull requests, deploy to Cloudflare on main
 .github/dependabot.yml          keeps the actions current
 ```
@@ -76,14 +76,16 @@ gh workflow run dispatch-canary.yml -R bynk-lang/.github -f repos=bynk-lang/your
 
 ### Baseline and canary versions
 
-`ci.yml`, `e2e.yml` and `deploy.yml` pin a Bynk version (`0.330.4`), so a red
-build on a push or pull request means your change broke something, not that a
-new compiler came out. The canary passes the newer release in. When it shows
-the app works with a newer version, move all three pins in one pull request:
+`ci.yml`, `e2e.yml` and `deploy.yml` all read the Bynk version from
+[`BYNK_VERSION`](BYNK_VERSION) (`version-file: BYNK_VERSION`), so a red build
+on a push or pull request means your change broke something, not that a new
+compiler came out. The canary passes each newer release in. When one passes,
+it opens a pull request moving `BYNK_VERSION` to it, with its checks run at
+that version; merge it to move every workflow at once.
 
-```sh
-./scripts/bump-bynk.sh 0.331.0
-```
+That needs the org's bump App (the `BUMP_APP_ID` and `BUMP_APP_KEY` secrets,
+passed with `secrets: inherit` in `bynk-canary.yml`). Outside the org, move
+`BYNK_VERSION` by hand.
 
 ## Beyond one context
 
@@ -125,9 +127,8 @@ exist (until then it warns and skips):
 | `CLOUDFLARE_API_TOKEN` | A Cloudflare API token with Workers deploy scope. |
 | `CLOUDFLARE_ACCOUNT_ID` | The Cloudflare account ID. |
 
-**After the first deploy,** `bynk.deploy.lock` changes, because it records what
-was deployed. The action never commits, so the workflow uploads the new lock as
-an artifact named `bynk.deploy.lock`. Commit it.
+**When a deploy changes `bynk.deploy.lock`,** as the first one does because it
+records what was deployed, bynk-deploy opens a pull request that commits it, through the org's bump App (the workflow mints its token). Merge it: later deploys rely on what it records. Without the App, the workflow uploads the new lock as an artifact named `bynk.deploy.lock` to commit instead.
 
 ## License
 
