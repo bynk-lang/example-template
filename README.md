@@ -39,7 +39,7 @@ and `GET /counters/:name` reads it. Replace it with your own.
 3. **Check it** before you push:
 
    ```sh
-   bynkc fmt --check . && bynkc check . && bynkc test .
+   bynk fmt --check . && bynk check . && bynk test .
    bynk dev                              # then try it in a browser or with curl
    ```
 
